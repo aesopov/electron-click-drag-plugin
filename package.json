@@ -1,6 +1,6 @@
 {
   "name": "electron-click-drag-plugin",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A native Electron plugin for click-and-drag functionality (Windows only)",
   "main": "build/Release/drag.node",
   "author": "noobfromph",
@@ -19,14 +19,14 @@
   ],
   "files": [
     "build/Release/drag.node",
-    "drag.cc",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
-    "test": "electron test/main.js"
+    "test": "electron test/main.js",
+    "install": "node -e \"console.log('Using prebuilt electron-click-drag-plugin binary')\""
   },
-  "dependencies": {
+  "devDependencies": {
     "electron": "^37.2.6",
     "node-addon-api": "^8.5.0"
   }
