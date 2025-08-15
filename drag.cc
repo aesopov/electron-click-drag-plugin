@@ -6,7 +6,12 @@
 Napi::Value StartDrag(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
-  HWND hwnd = (HWND)(uintptr_t)info[0].As<Napi::Number>().Int64Value();
+  if (!info[0].IsBuffer()) {
+    Napi::TypeError::New(env, "Expected buffer as first argument").ThrowAsJavaScriptException();
+    return env.Null();
+  }
+
+  HWND hwnd = *reinterpret_cast<HWND*>(info[0].As<Napi::Buffer<char>>().Data());
 
   POINT startPos;
   GetCursorPos(&startPos);
@@ -46,7 +51,6 @@ Napi::Value StartDrag(const Napi::CallbackInfo& info) {
 
   Window window = (Window)info[0].As<Napi::Number>().Int64Value();
 
-  // Get the current pointer position
   Window root, child;
   int root_x, root_y, win_x, win_y;
   unsigned int mask;
@@ -64,13 +68,12 @@ Napi::Value StartDrag(const Napi::CallbackInfo& info) {
   xev.xclient.window = window;
   xev.xclient.message_type = moveAtom;
   xev.xclient.format = 32;
-  xev.xclient.data.l[0] = root_x; // x root coordinates
-  xev.xclient.data.l[1] = root_y; // y root coordinates
-  xev.xclient.data.l[2] = 8;     // _NET_WM_MOVERESIZE_MOVE
-  xev.xclient.data.l[3] = 1;     // Button 1 (left mouse button)
+  xev.xclient.data.l[0] = root_x;
+  xev.xclient.data.l[1] = root_y;
+  xev.xclient.data.l[2] = 8;
+  xev.xclient.data.l[3] = 1;
   xev.xclient.data.l[4] = 0;
 
-  // Send to root window with the correct mask
   XSendEvent(display, DefaultRootWindow(display), False,
              SubstructureRedirectMask | SubstructureNotifyMask, &xev);
   
