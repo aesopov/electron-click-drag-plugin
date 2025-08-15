@@ -44,11 +44,11 @@ app.whenReady().then(() => {
     try {
       const hwndBuffer = win.getNativeWindowHandle();
       // On Linux, extract the window ID from the buffer (first 4 bytes, little-endian)
-+     const windowId = process.platform === 'linux'
-+      ? hwndBuffer.readUInt32LE(0)
-+      : hwndBuffer;
+      const windowId = process.platform === 'linux'
+      ? hwndBuffer.readUInt32LE(0)
+      : hwndBuffer;
 
-+     dragAddon.startDrag(windowId);
+      dragAddon.startDrag(windowId);
     } catch (error) {
       console.error(error);
     }
@@ -56,7 +56,7 @@ app.whenReady().then(() => {
 });
 ```
 ### ✅ Tested On
-Windows 10 / 11
+Windows 10 / 11, Linux (Fedora)
 
 Standard Electron (>= v22)
 

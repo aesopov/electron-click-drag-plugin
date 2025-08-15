@@ -1,8 +1,9 @@
 {
   "name": "electron-click-drag-plugin",
-  "version": "1.0.2",
-  "description": "A native Electron plugin for click-and-drag functionality (Windows only)",
-  "main": "build/Release/drag.node",
+  "version": "2.0.0",
+  "description": "A native Electron plugin for click-and-drag functionality (Windows + Linux)",
+  "main": "index.js",
+  "types": "index.d.ts",
   "author": "noobfromph",
   "license": "MIT",
   "repository": {
@@ -14,11 +15,14 @@
     "native",
     "drag",
     "windows",
+    "linux",
     "addon",
     "click-drag"
   ],
   "files": [
-    "build/Release/drag.node",
+    "build/Release/win32-x64/drag.node",
+    "build/Release/linux-x64/drag.node",
+    "index.js",
     "README.md",
     "LICENSE"
   ],
