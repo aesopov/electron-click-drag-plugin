@@ -21,6 +21,10 @@ app.whenReady().then(() => {
 
   ipcMain.on('start-drag', (event) => {
     const hwndBuffer = win.getNativeWindowHandle();
-    dragAddon.startDrag(hwndBuffer);
+    // On Linux, extract the window ID from the buffer (first 4 bytes, little-endian)
+    const windowId = process.platform === 'linux'
+      ? hwndBuffer.readUInt32LE(0)
+      : hwndBuffer;
+    dragAddon.startDrag(windowId);
   });
 });
