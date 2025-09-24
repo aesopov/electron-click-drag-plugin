@@ -1,4 +1,5 @@
 #include "drag.h"
+#include "drag_utils.h"
 
 #ifdef _WIN32
 #include <windows.h>
@@ -7,18 +8,21 @@ Napi::Value StartDrag(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
   if (info.Length() < 1 || !info[0].IsBuffer()) {
-    Napi::TypeError::New(env, "Expected buffer as first argument").ThrowAsJavaScriptException();
+    DragUtils::ThrowError(env, "Expected buffer as first argument");
     return env.Null();
   }
 
-  HWND hwnd = *reinterpret_cast<HWND*>(info[0].As<Napi::Buffer<char>>().Data());
-
-  // Optional client coordinates (x, y) in window client space
-  int clientX = -1, clientY = -1;
-  if (info.Length() >= 3 && info[1].IsNumber() && info[2].IsNumber()) {
-    clientX = (int)info[1].As<Napi::Number>().Int64Value();
-    clientY = (int)info[2].As<Napi::Number>().Int64Value();
+  auto buf = info[0].As<Napi::Buffer<char>>();
+  if (!DragUtils::ValidateBufferSize(env, buf, sizeof(void*), "Invalid native handle buffer")) {
+    return env.Null();
   }
+
+  HWND hwnd = *reinterpret_cast<HWND*>(buf.Data());
+
+  // Extract optional client coordinates from options object {x, y}
+  auto coords = DragUtils::ExtractCoordinates(info, 1);
+  int clientX = coords.hasCoordinates ? coords.x : -1;
+  int clientY = coords.hasCoordinates ? coords.y : -1;
 
   int screenStartX = 0, screenStartY = 0;
   POINT tmp;

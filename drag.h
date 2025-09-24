@@ -5,7 +5,7 @@
 // Windows: expects a Buffer containing HWND bytes from getNativeWindowHandle().
 // Linux (X11): accepts a Buffer from getNativeWindowHandle() (preferred) or legacy Number window id.
 // macOS: expects a Buffer with NSWindow* from getNativeWindowHandle().
-// Optionally accepts two Numbers (x, y) as client coordinates where the mousedown occurred.
+// Optionally accepts an options object with {x, y} as client coordinates where the mousedown occurred.
 Napi::Value StartDrag(const Napi::CallbackInfo& info);
 
 // Module initialization common to all platforms

@@ -19,12 +19,12 @@ app.whenReady().then(() => {
 
   win.webContents.openDevTools();
 
-  ipcMain.on('start-drag', (event, x, y) => {
+  ipcMain.on('start-drag', (event, options) => {
     const hwndBuffer = win.getNativeWindowHandle();
     // Pass buffer directly on all platforms now
-    if (x !== undefined && y !== undefined) {
+    if (options && typeof options.x === 'number' && typeof options.y === 'number') {
       // Use provided coordinates
-      dragAddon.startDrag(hwndBuffer, x, y);
+      dragAddon.startDrag(hwndBuffer, options);
     } else {
       // Use current mouse position
       dragAddon.startDrag(hwndBuffer);

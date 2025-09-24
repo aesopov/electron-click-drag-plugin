@@ -1,4 +1,5 @@
 #include "drag.h"
+#include "drag_utils.h"
 
 #ifdef __APPLE__
 #import <Cocoa/Cocoa.h>
@@ -28,14 +29,12 @@ static NSEvent* CreateDragEvent(NSWindow* window, bool hasPoint, NSPoint provide
 Napi::Value StartDrag(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
   if (info.Length() < 1 || !info[0].IsBuffer()) {
-    Napi::TypeError::New(env, "Expected buffer as first argument").ThrowAsJavaScriptException();
+    DragUtils::ThrowError(env, "Expected buffer as first argument");
     return env.Null();
   }
 
   auto buf = info[0].As<Napi::Buffer<char>>();
-  // NSWindow* is pointer-sized
-  if (buf.Length() < sizeof(void*)) {
-    Napi::TypeError::New(env, "Invalid native handle buffer").ThrowAsJavaScriptException();
+  if (!DragUtils::ValidateBufferSize(env, buf, sizeof(void*), "Invalid native handle buffer")) {
     return env.Null();
   }
 
@@ -43,7 +42,7 @@ Napi::Value StartDrag(const Napi::CallbackInfo& info) {
   // Read as Objective-C id and resolve window accordingly.
   id obj = *reinterpret_cast<id*>(buf.Data());
   if (!obj) {
-    Napi::TypeError::New(env, "Null native pointer").ThrowAsJavaScriptException();
+    DragUtils::ThrowError(env, "Null native pointer");
     return env.Null();
   }
   NSWindow* window = nil;
@@ -53,17 +52,17 @@ Napi::Value StartDrag(const Napi::CallbackInfo& info) {
     window = [(NSView*)obj window];
   }
   if (!window) {
-    Napi::TypeError::New(env, "Could not resolve NSWindow from handle").ThrowAsJavaScriptException();
+    DragUtils::ThrowError(env, "Could not resolve NSWindow from handle");
     return env.Null();
   }
 
-  // Optional client coordinates in window space (x, y)
-  bool hasPoint = false;
+  // Extract optional client coordinates from options object {x, y}
+  auto coords = DragUtils::ExtractCoordinates(info, 1);
+  bool hasPoint = coords.hasCoordinates;
   NSPoint provided = NSZeroPoint;
-  if (info.Length() >= 3 && info[1].IsNumber() && info[2].IsNumber()) {
-    hasPoint = true;
-    provided.x = (CGFloat)info[1].As<Napi::Number>().DoubleValue();
-    provided.y = (CGFloat)info[2].As<Napi::Number>().DoubleValue();
+  if (hasPoint) {
+    provided.x = (CGFloat)coords.x;
+    provided.y = (CGFloat)coords.y;
     // Convert from top-left origin to bottom-left origin (macOS coordinate system)
     NSView* cv = window.contentView;
     CGFloat height = cv ? cv.bounds.size.height : window.frame.size.height;

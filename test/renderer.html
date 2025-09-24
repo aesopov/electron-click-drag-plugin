@@ -32,8 +32,8 @@
     window.onload = () => {
       document.getElementById('drag-me').addEventListener('mousedown', (event) => {
         console.log('dragging with coordinates:', event.clientX, event.clientY)
-        // Send the coordinates where the mousedown occurred
-        ipcRenderer.send('start-drag', event.clientX, event.clientY);
+        // Send the coordinates where the mousedown occurred as an options object
+        ipcRenderer.send('start-drag', { x: event.clientX, y: event.clientY });
       });
     }
   </script>

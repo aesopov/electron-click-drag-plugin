@@ -4,6 +4,7 @@
       "target_name": "drag",
       "sources": [
         "drag_common.cc",
+        "drag_utils.cc",
         "drag_win.cc",
         "drag_linux.cc"
       ],

@@ -1,4 +1,5 @@
 #include "drag.h"
+#include "drag_utils.h"
 
 #if !defined(_WIN32) && !defined(__APPLE__)
 #include <X11/Xlib.h>
@@ -10,13 +11,13 @@ Napi::Value StartDrag(const Napi::CallbackInfo& info) {
   Napi::Env env = info.Env();
 
   if (info.Length() < 1) {
-    Napi::TypeError::New(env, "Expected window handle as first argument").ThrowAsJavaScriptException();
+    DragUtils::ThrowError(env, "Expected window handle as first argument");
     return env.Null();
   }
 
   Display* display = XOpenDisplay(NULL);
   if (!display) {
-    Napi::TypeError::New(env, "Cannot open X display").ThrowAsJavaScriptException();
+    DragUtils::ThrowError(env, "Cannot open X display");
     return env.Null();
   }
 
@@ -33,27 +34,29 @@ Napi::Value StartDrag(const Napi::CallbackInfo& info) {
     window = (Window)info[0].As<Napi::Number>().Int64Value();
   } else {
     XCloseDisplay(display);
-    Napi::TypeError::New(env, "Expected Buffer or Number for window handle").ThrowAsJavaScriptException();
+    DragUtils::ThrowError(env, "Expected Buffer or Number for window handle");
     return env.Null();
   }
 
-  // Optional client coordinates (x, y). If not provided, query current pointer.
-  bool haveClient = (info.Length() >= 3 && info[1].IsNumber() && info[2].IsNumber());
+  // Extract optional client coordinates from options object {x, y}
+  auto coords = DragUtils::ExtractCoordinates(info, 1);
+  bool haveClient = coords.hasCoordinates;
+  int win_x = coords.hasCoordinates ? coords.x : 0;
+  int win_y = coords.hasCoordinates ? coords.y : 0;
+
   Window root, child;
-  int root_x, root_y, win_x, win_y;
+  int root_x, root_y;
   unsigned int mask;
   if (!haveClient) {
     XQueryPointer(display, window, &root, &child, &root_x, &root_y, &win_x, &win_y, &mask);
   } else {
     // Use provided client coordinates, convert to root coordinates
-    win_x = (int)info[1].As<Napi::Number>().Int64Value();
-    win_y = (int)info[2].As<Napi::Number>().Int64Value();
 
     // Convert client coordinates to root coordinates
     XWindowAttributes attrs;
     if (XGetWindowAttributes(display, window, &attrs) == 0) {
       XCloseDisplay(display);
-      Napi::TypeError::New(env, "Failed to get window attributes").ThrowAsJavaScriptException();
+      DragUtils::ThrowError(env, "Failed to get window attributes");
       return env.Null();
     }
     root_x = attrs.x + win_x;
@@ -63,7 +66,7 @@ Napi::Value StartDrag(const Napi::CallbackInfo& info) {
   Atom moveAtom = XInternAtom(display, "_NET_WM_MOVERESIZE", False);
   if (moveAtom == None) {
     XCloseDisplay(display);
-    Napi::TypeError::New(env, "Cannot find _NET_WM_MOVERESIZE atom").ThrowAsJavaScriptException();
+    DragUtils::ThrowError(env, "Cannot find _NET_WM_MOVERESIZE atom");
     return env.Null();
   }
 
