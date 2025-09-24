@@ -9,9 +9,9 @@
 // the actual NSEvent already occurred. We can trigger drag based on current mouse
 // position by creating a leftMouseDragged event and calling performWindowDragWithEvent.
 
-static NSEvent* CreateDragEvent(NSWindow* window) {
-  // Use window-local mouse location for the synthetic event
-  NSPoint local = [window mouseLocationOutsideOfEventStream];
+static NSEvent* CreateDragEvent(NSWindow* window, bool hasPoint, NSPoint provided) {
+  // Use provided window-local mouse location if given, otherwise current mouse location
+  NSPoint local = hasPoint ? provided : [window mouseLocationOutsideOfEventStream];
   NSTimeInterval now = [NSDate timeIntervalSinceReferenceDate];
   NSEvent* event = [NSEvent mouseEventWithType:NSEventTypeLeftMouseDown
                                        location:local
@@ -57,10 +57,23 @@ Napi::Value StartDrag(const Napi::CallbackInfo& info) {
     return env.Null();
   }
 
+  // Optional client coordinates in window space (x, y)
+  bool hasPoint = false;
+  NSPoint provided = NSZeroPoint;
+  if (info.Length() >= 3 && info[1].IsNumber() && info[2].IsNumber()) {
+    hasPoint = true;
+    provided.x = (CGFloat)info[1].As<Napi::Number>().DoubleValue();
+    provided.y = (CGFloat)info[2].As<Napi::Number>().DoubleValue();
+    // Convert from top-left origin to bottom-left origin (macOS coordinate system)
+    NSView* cv = window.contentView;
+    CGFloat height = cv ? cv.bounds.size.height : window.frame.size.height;
+    provided.y = height - provided.y;
+  }
+
   dispatch_async(dispatch_get_main_queue(), ^{
     @autoreleasepool {
       if ([window respondsToSelector:@selector(performWindowDragWithEvent:)]) {
-        NSEvent* ev = CreateDragEvent(window);
+        NSEvent* ev = CreateDragEvent(window, hasPoint, provided);
         [window performWindowDragWithEvent:ev];
       } else {
         // Fallback: begin a standard window drag via performDrag

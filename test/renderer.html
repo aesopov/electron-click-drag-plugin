@@ -30,9 +30,10 @@
     const { ipcRenderer } = require('electron');
     console.log('ipcRenderer', ipcRenderer)
     window.onload = () => {
-      document.getElementById('drag-me').addEventListener('mousedown', () => {
-        console.log('dragging')
-          ipcRenderer.send('start-drag');
+      document.getElementById('drag-me').addEventListener('mousedown', (event) => {
+        console.log('dragging with coordinates:', event.clientX, event.clientY)
+        // Send the coordinates where the mousedown occurred
+        ipcRenderer.send('start-drag', event.clientX, event.clientY);
       });
     }
   </script>

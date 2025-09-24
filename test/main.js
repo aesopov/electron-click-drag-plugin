@@ -19,10 +19,15 @@ app.whenReady().then(() => {
 
   win.webContents.openDevTools();
 
-  ipcMain.on('start-drag', (event) => {
+  ipcMain.on('start-drag', (event, x, y) => {
     const hwndBuffer = win.getNativeWindowHandle();
-    // Linux: extract window id; macOS/Windows: pass the buffer
-    const windowId = process.platform === 'linux' ? hwndBuffer.readUInt32LE(0) : hwndBuffer;
-    dragAddon.startDrag(windowId);
+    // Pass buffer directly on all platforms now
+    if (x !== undefined && y !== undefined) {
+      // Use provided coordinates
+      dragAddon.startDrag(hwndBuffer, x, y);
+    } else {
+      // Use current mouse position
+      dragAddon.startDrag(hwndBuffer);
+    }
   });
 });
