@@ -24,9 +24,11 @@ app.whenReady().then(() => {
     // Pass buffer directly on all platforms now
     if (options && typeof options.x === 'number' && typeof options.y === 'number') {
       // Use provided coordinates
+      console.log(`Starting drag from specified coordinates: ${options.x}, ${options.y}`);
       dragAddon.startDrag(hwndBuffer, options);
     } else {
       // Use current mouse position
+      console.log('Starting drag from current mouse position');
       dragAddon.startDrag(hwndBuffer);
     }
   });

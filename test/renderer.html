@@ -20,20 +20,64 @@
       width: 200px;
       height: 200px;
     }
+
+    #drag-center {
+      border: 3px solid #ff6b6b;
+      padding: 20px;
+      margin: 20px;
+      position: relative;
+      display: inline-block;
+    }
+
+    #drag-center::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 2px;
+      background-color: #ff6b6b;
+      transform: translate(-50%, -50%);
+    }
+
+    #drag-center::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 2px;
+      height: 20px;
+      background-color: #ff6b6b;
+      transform: translate(-50%, -50%);
+    }
   </style>
 </head>
 
 <body>
   <h1 id="drag-me" style="user-select: none;">🖱️ Drag Me!</h1>
+  <h1 id="drag-center" style="user-select: none;">Drag from Center!</h1>
+  <p style="color: #333;">Try both buttons - the first uses your click position, the second always drags from its center.</p>
 
   <script>
     const { ipcRenderer } = require('electron');
     console.log('ipcRenderer', ipcRenderer)
     window.onload = () => {
+      // Drag from mouse click position
       document.getElementById('drag-me').addEventListener('mousedown', (event) => {
-        console.log('dragging with coordinates:', event.clientX, event.clientY)
-        // Send the coordinates where the mousedown occurred as an options object
-        ipcRenderer.send('start-drag', { x: event.clientX, y: event.clientY });
+        console.log('dragging from current mouse position')
+        // No coordinates - use current mouse position
+        ipcRenderer.send('start-drag');
+      });
+
+      // Drag from element center regardless of click position
+      document.getElementById('drag-center').addEventListener('mousedown', (event) => {
+        const rect = event.target.getBoundingClientRect();
+        const centerX = rect.left + rect.width / 2;
+        const centerY = rect.top + rect.height / 2;
+
+        console.log('dragging from element center:', centerX, centerY)
+        // Send center coordinates as drag start point
+        ipcRenderer.send('start-drag', { x: centerX, y: centerY });
       });
     }
   </script>
